@@ -1,122 +1,97 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react';
+import CreatePollForm from './components/CreatePollForm/CreatePollForm';
+import PollView from './components/PollView/PollView';
+import { fetchApi } from './api/client';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [currentView, setCurrentView] = useState('home');
+  const [selectedPollId, setSelectedPollId] = useState(null);
+  const [polls, setPolls] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadPolls = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchApi('/polls');
+      setPolls(data);
+    } catch (err) {
+      console.error('Failed to load polls', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (currentView === 'home') {
+      loadPolls();
+    }
+  }, [currentView]);
+
+  const handleCreatePoll = (poll) => {
+    setSelectedPollId(poll.id);
+    setCurrentView('poll');
+  };
+
+  const goToPoll = (id) => {
+    setSelectedPollId(id);
+    setCurrentView('poll');
+  };
+
+  const goHome = () => {
+    setSelectedPollId(null);
+    setCurrentView('home');
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="app">
+      <header className="app-header">
+        <h1 onClick={goHome} className="logo">Enquetes ao Vivo</h1>
+      </header>
 
-      <div className="ticks"></div>
+      <main className="app-main">
+        {currentView === 'home' && (
+          <div className="home-view">
+            <div className="home-header">
+              <h2>Enquetes Recentes</h2>
+              <button className="primary-btn" onClick={() => setCurrentView('create')}>
+                + Nova Enquete
+              </button>
+            </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+            {loading ? (
+              <p>Carregando enquetes...</p>
+            ) : polls.length === 0 ? (
+              <div className="empty-state">
+                <p>Nenhuma enquete encontrada.</p>
+              </div>
+            ) : (
+              <div className="polls-grid">
+                {polls.map(poll => (
+                  <div key={poll.id} className="poll-card" onClick={() => goToPoll(poll.id)}>
+                    <h3>{poll.question}</h3>
+                    <p>Criado por: {poll.creator_name}</p>
+                    <span className="votes-count">{poll.total_votes} votos</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {currentView === 'create' && (
+          <div>
+            <button className="back-link" onClick={goHome}>← Voltar</button>
+            <CreatePollForm onPollCreated={handleCreatePoll} />
+          </div>
+        )}
+
+        {currentView === 'poll' && selectedPollId && (
+          <PollView pollId={selectedPollId} onBack={goHome} />
+        )}
+      </main>
+    </div>
+  );
 }
 
-export default App
+export default App;
