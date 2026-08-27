@@ -2,6 +2,8 @@
 
 Este projeto implementa um sistema de enquetes em tempo real para o teste técnico da FantasyDraft
 
+Olá! Nesse projeto de teste que fiz, achei bem tranquilo, pois tive experiência no passado com React e Node. Tive um pouco de dificuldade com o Laravel por não ter muito conhecimento, mas como o Laravel é em POO, então foi tranquilo. Levei ontem à noite e hoje para terminar esse projeto.
+
 ## Arquitetura do projeto
 
 1. **Backend (Laravel):**
